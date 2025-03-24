@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Marbles Replacement</title>
+    <style>
+        *, *:before, *:after {
+            box-sizing: border-box;
+            font-family: "Trebuchet MS", serif;
+        }
+
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+            position: relative;
+            height: 150px;
+            overflow: hidden;
+        }
+
+        .marble-list {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 800px;
+            background: #000c;
+            color: #fff;
+            font-size: 36px;
+            padding: 0 10px;
+            transition: top 5000ms ease;
+        }
+
+        .marble-list.hidden {
+            display: none;
+        }
+
+        .marble-list > * {
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+            line-height: 50px;
+            text-align: center;
+        }
+
+        .winner {
+            color: #ff9090;
+        }
+
+        .marbles-countdown-instructions {
+            background: #000c;
+            color: #fff;
+            font-size: 48px;
+            padding: 0 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .marbles-countdown-instructions.hidden {
+            display: none;
+        }
+
+        .marbles-title {
+            font-size: 64px;
+            margin-bottom: 10px;
+        }
+
+        .marbles-title > b {
+            color: #ff9090;
+        }
+
+    </style>
+</head>
+<body>
+<div class="marble-list hidden" id="marble-list">
+
+</div>
+<div class="marbles-countdown-instructions hidden" id="marbles-countdown-instructions">
+    <div class="marbles-title">
+        Marbles starting in <b id="timer">5:00</b>
+    </div>
+    <div class="marbles-instructions">
+        type !play to play
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/obs-websocket-js"></script>
+<script>
+    (function () {
+        const ITEM_HEIGHT = 50;
+        const obs = new OBSWebSocket();
+        const marbleList = document.getElementById('marble-list');
+        const instructions = document.getElementById('marbles-countdown-instructions');
+        const timer = document.getElementById('timer');
+        let players = [];
+
+        const doRun = () => {
+            instructions.className = 'marbles-countdown-instructions hidden';
+            const winner = players[Math.round(Math.random() * 10000) % players.length];
+            let displayPlayers = [...players, ...players];
+            while(displayPlayers.length < 150){
+                displayPlayers = [...displayPlayers, ...displayPlayers];
+            }
+            const lastWinnerIndex = displayPlayers.lastIndexOf(winner) - players.length;
+            const amountToScroll = (lastWinnerIndex - 1) * ITEM_HEIGHT;
+            displayPlayers.forEach((player, index) => {
+                const div = document.createElement('div');
+                div.innerHTML = player;
+                if(index === lastWinnerIndex){
+                    div.className = 'winner';
+                }
+                marbleList.appendChild(div);
+            });
+            marbleList.className = 'marble-list';
+            setTimeout(() => {
+                marbleList.style.top = `-${amountToScroll}px`;
+                setTimeout(() => {
+                    marbleList.className = 'marble-list hidden';
+                    marbleList.style.top = 0;
+                    players = [];
+                    fetch('http://localhost:9450/api', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(
+                            {
+                                "request": "setVariable",
+                                "name": "winner",
+                                "value": winner,
+                                "buttonID": "marblesReplacementWinner"
+                            }
+                        )
+                    });
+                    fetch('http://localhost:9450/api', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(
+                            {
+                                "request": "triggerButton",
+                                "buttonID": "marblesReplacementWinner"
+                            }
+                        )
+                    });
+                }, 10000);
+            }, 5000);
+        };
+
+        const updateTimer = (seconds) => {
+            const minutes = Math.floor(seconds/60);
+            const remainingSeconds = (seconds % 60).toLocaleString('en-US', {
+                minimumIntegerDigits: 2,
+                useGrouping: false
+            });
+            timer.innerHTML = `${minutes}:${remainingSeconds}`;
+        };
+
+        const doTimer = () => {
+            let remainingTime = 300;
+            instructions.className = 'marbles-countdown-instructions';
+            marbleList.innerHTML = '';
+            updateTimer(remainingTime);
+            const countdownInterval = setInterval(() => {
+                remainingTime-=1;
+                if(remainingTime === 0){
+                    if(players.length === 0){
+                        instructions.className = 'marbles-countdown-instructions hidden';
+                        return;
+                    }
+                    doRun();
+                    clearInterval(countdownInterval);
+                    return;
+                }
+                updateTimer(remainingTime);
+            }, 1000);
+        };
+
+
+        const ConnectToOBS = async () => {
+            try {
+                //Connection Attempt
+                const urlParams = new URLSearchParams(window.location.search);
+                const wsPort = urlParams.get('wsPort') || '4455';
+                const wsPassword = urlParams.get('wsPassword') || '';
+                await obs.connect(`ws://localhost:${wsPort}`, wsPassword);
+                console.log("Connected to OBS!");
+
+                //On Incoming Custom Event
+                obs.on("CustomEvent", e => {
+                    if (e.event === "marblesAdd") {
+                        const {player} = e;
+                        players.push(player);
+                        players = [... new Set(players)];
+                    }
+                    if (e.event === "marblesPlay") {
+                        doTimer();
+                    }
+                });
+                //On disconnect event
+                obs.on("ConnectionClosed", (data) => {
+                    console.log(`Disconnected from OBS!`);
+                });
+            } catch (error) {
+                console.log(`${error}`);
+            }
+        }
+
+        ConnectToOBS();
+    }());
+</script>
+</body>
+</html>
