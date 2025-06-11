@@ -135,18 +135,22 @@
                             }
                         )
                     });
-                    fetch('http://localhost:9450/api', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(
-                            {
-                                "request": "triggerButton",
-                                "buttonID": "marblesReplacementWinner"
-                            }
-                        )
-                    });
+                    // the chat was returning undefined or the old value so we need to have a little bit of a delay
+                    setTimeout(() => {
+                        fetch('http://localhost:9450/api', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(
+                                {
+                                    "request": "triggerButton",
+                                    "buttonID": "marblesReplacementWinner"
+                                }
+                            )
+                        });
+                    }, 1000);
+
                 }, 20000);
             }, 5000);
         };
