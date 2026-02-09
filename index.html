@@ -3,10 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <title>Marbles Replacement</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
     <style>
+
+
+        :root {
+            /* Family Feud color palette */
+            --ff-blue-dark: #1a237e;
+            --ff-blue-medium: #283593;
+            --ff-blue-light: #3949ab;
+            --ff-gold: #ffd700;
+            --ff-gold-dark: #c9a500;
+            --ff-cream: #fff8e1;
+            --ff-white: #ffffff;
+            --ff-red: #c62828;
+            --ff-green: #2e7d32;
+
+            /* Board colors */
+            --board-bg: linear-gradient(135deg, #1a237e 0%, #283593 50%, #1a237e 100%);
+            --option-bg: #0d1b4a;
+            --option-bg-revealed: #1a3a7a;
+        }
+
+
         *, *:before, *:after {
             box-sizing: border-box;
-            font-family: "Trebuchet MS", serif;
+            font-family: 'Oswald', sans-serif;
         }
 
         html,
@@ -23,8 +47,11 @@
             top: 0;
             left: 0;
             width: 800px;
-            background: #000c;
-            color: #fff;
+            background: var(--board-bg);
+            color: var(--ff-cream);
+            text-shadow:
+                    3px 3px 0 var(--ff-blue-dark),
+                    0 0 20px rgba(255, 215, 0, 0.5);
             font-size: 36px;
             padding: 0 10px;
             transition: top 15000ms ease;
@@ -43,12 +70,15 @@
         }
 
         .winner {
-            color: #ff9090;
+            color: var(--ff-gold);
         }
 
         .marbles-countdown-instructions {
-            background: #000c;
-            color: #fff;
+            background: var(--board-bg);
+            color: var(--ff-cream);
+            text-shadow:
+                    3px 3px 0 var(--ff-blue-dark),
+                    0 0 20px rgba(255, 215, 0, 0.5);
             font-size: 48px;
             padding: 0 10px;
             text-align: center;
@@ -69,7 +99,7 @@
         }
 
         .marbles-title > b {
-            color: #ff9090;
+            color: var(--ff-gold);
         }
 
     </style>
@@ -80,7 +110,7 @@
 </div>
 <div class="marbles-countdown-instructions hidden" id="marbles-countdown-instructions">
     <div class="marbles-title">
-        Marbles starting in <b id="timer">5:00</b>
+        Sweepstakes starting in <b id="timer">5:00</b>
     </div>
     <div class="marbles-instructions">
         type !play to play
